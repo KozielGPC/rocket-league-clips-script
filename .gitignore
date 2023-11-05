@@ -1,0 +1,4 @@
+*.mp4
+/clips
+/venv
+*.mp3
