@@ -6,10 +6,10 @@ from selenium.webdriver.common.by import By
 from moviepy.editor import VideoFileClip, concatenate_videoclips
 
 def get_clip_links(driver):
-    driver.get("https://www.twitch.tv/directory/game/Rocket%20League/clips?fbclid=IwAR2xYPFh3Um2YS4EsDkjAdA0b-CMvjQTLVLeNW5D77-aPh3IqwW9c4e7lIM&range=24hr")
+    driver.get("https://www.twitch.tv/directory/category/rocket-league/clips?range=24hr")
     driver.implicitly_wait(10)
 
-    links = driver.find_elements(By.XPATH, "//a[@data-a-target='preview-card-image-link']")[:10]
+    links = driver.find_elements(By.XPATH, "//a[@data-a-target='preview-card-image-link']")[:2]
     clip_links = [link.get_attribute('href') for link in links]
     return clip_links
 
