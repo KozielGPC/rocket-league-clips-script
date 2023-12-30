@@ -1,4 +1,4 @@
 *.mp4
-/clips
+assets/clips
 /venv
 *.mp3
