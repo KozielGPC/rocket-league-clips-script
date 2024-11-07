@@ -7,10 +7,10 @@ from concurrent.futures import ThreadPoolExecutor
 import subprocess
 
 def get_clip_links(driver):
-   driver.get("https://www.twitch.tv/directory/category/rocket-league/clips")
+   driver.get("https://www.twitch.tv/directory/category/rocket-league/clips?range=all")
    driver.implicitly_wait(10)
 
-   links = driver.find_elements(By.XPATH, "//a[@data-a-target='preview-card-image-link']")[:4]
+   links = driver.find_elements(By.XPATH, "//a[@data-a-target='preview-card-image-link']")[:10]
    clip_links = [link.get_attribute('href') for link in links]
    return clip_links
 
@@ -21,15 +21,35 @@ def download_clip(url, filename):
    with youtube_dl.YoutubeDL(ydl_opts) as ydl:
        ydl.download([url])
 
+def get_video_info(filename):
+   command = ["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=codec_name", "-of", "csv=s=x:p=0", filename]
+   result = subprocess.run(command, capture_output=True, text=True)
+   return result.stdout.strip()
+
+def get_audio_info(filename):
+   command = ["ffprobe", "-v", "error", "-select_streams", "a:0", "-show_entries", "stream=codec_name", "-of", "csv=s=x:p=0", filename]
+   result = subprocess.run(command, capture_output=True, text=True)
+   return result.stdout.strip()
+
+
 def create_video_from_clips(clip_links):
+   video_codec = None
+   audio_codec = None
+
    with open('assets/clips.txt', 'w') as f:
        for i in range(len(clip_links)):
-           f.write(f"file 'clips/clip{i}.mp4'\n")
+           filename = f'clips/clip{i}.mp4'
+           if video_codec is None:
+               video_codec = get_video_info(filename)
+           if audio_codec is None:
+               audio_codec = get_audio_info(filename)
+           f.write(f"file '{filename}'\n")
 
-   command = ['ffmpeg', '-f', 'concat', '-safe', '0', '-i', 'assets/clips.txt', '-c', 'copy', 'assets/output.mp4']
+   command = ['ffmpeg', '-fflags', '+genpts', '-f', 'concat', '-safe', '0', '-i', 'assets/clips.txt', '-c:v', video_codec, '-c:a', audio_codec, 'assets/output.mp4']
    subprocess.run(command, check=True)
 
    delete_clips(clip_links)
+
 
 def delete_clips(clip_links):
    for i in range(len(clip_links)):
